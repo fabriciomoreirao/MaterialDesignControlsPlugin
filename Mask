@@ -1,0 +1,83 @@
+<entry:MaterialEntry  LabelText="CPF" Text="{Binding Paciente.CPF}"  Keyboard="Numeric" LabelSize="12" 
+                                          Type="Outlined" BackgroundColor="Transparent"  Visual="Material" Padding="0" Mask="XXX.XXX.XXX-XX" >
+                        
+</entry:MaterialEntry>
+
+//codebehind//
+  public static readonly BindableProperty MaskProperty =
+         BindableProperty.Create(nameof(Mask), typeof(string), typeof(MaterialEntry), defaultValue: null);
+
+        public string Mask
+        {
+            get { return (string)GetValue(MaskProperty); }
+            set
+            {
+                SetValue(MaskProperty, value);
+                SetPositions();
+            }
+        }
+   IDictionary<int, char> _positions;
+
+        void SetPositions()
+        {
+            if (string.IsNullOrEmpty(Mask))
+            {
+                _positions = null;
+                return;
+            }
+
+            var list = new Dictionary<int, char>();
+            for (var i = 0; i < Mask.Length; i++)
+                if (Mask[i] != 'X')
+                    list.Add(i, Mask[i]);
+
+            _positions = list;
+        }
+
+  protected override void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            if (!this.initialized)
+            {
+                this.initialized = true;
+                this.InitializeComponent();
+
+            }
+
+            // TODO: Check if you can take out the strong password.
+
+            switch (propertyName)
+            {
+                //add
+                case nameof(this.Text):
+                    if (!string.IsNullOrEmpty(this.Text))
+                    {
+                        var text = this.Text;
+                        if (!string.IsNullOrEmpty(this.Mask))
+                        {
+                            SetPositions();
+                        }
+
+                        if (string.IsNullOrWhiteSpace(this.Text) || _positions == null)
+                            return;
+
+                        if (this.Text.Length > Mask.Length)
+                        {
+                            this.Text = this.Text.Remove(this.Text.Length - 1);
+                            return;
+                        }
+
+                        foreach (var position in _positions)
+                        {
+                            if (this.Text.Length >= position.Key + 1)
+                            {
+                                var value = position.Value.ToString();
+                                if (this.Text.Substring(position.Key, 1) != value)
+                                    text = this.Text.Insert(position.Key, value);
+                            }
+                        }
+
+                        if (this.Text != text)
+                            this.Text = text;
+                    }
+                    break;
+}
